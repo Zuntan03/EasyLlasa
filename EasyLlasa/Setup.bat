@@ -76,4 +76,3 @@ pip install -qq torch==2.7.1+cu128 torchaudio==2.7.1+cu128 --index-url https://d
 if %ERRORLEVEL% neq 0 ( pause & popd & exit /b 1 )
 
 popd rem "~dp0.."
-cmd /k
