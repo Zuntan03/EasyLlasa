@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 > NUL
+set CURL_CMD=C:\Windows\System32\curl.exe -kL
 set EASY_TOOLS=%~dp0..\EasyTools
 set PYTHON_ACTIVATE=%EASY_TOOLS%\Python\Python_Activate.bat
 
@@ -12,6 +13,11 @@ start %~dp0vc_redist.x64.exe /install /passive /norestart
 :EXIST_VC_REDIST_X64
 
 pushd "%~dp0.."
+
+if not exist Dialogue.txt (
+	echo copy /Y EasyLlasa\Dialogue.txt .
+	copy /Y EasyLlasa\Dialogue.txt .
+)
 
 call %PYTHON_ACTIVATE%
 if %ERRORLEVEL% neq 0 ( popd & exit /b 1 )
