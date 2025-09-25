@@ -77,7 +77,7 @@ exit /b 0
 :main
 @REM 環境変数設定
 set PLAY=--play --volume 0.7 --speed 1.0
-set BATCH_COUNT=0
+set BATCH_COUNT=1
 
 echo ===============================================
 echo Llasa Pipe Server Mode / Llasa パイプサーバーモード
