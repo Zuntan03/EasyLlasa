@@ -65,6 +65,14 @@ echo   BATCH_COUNT=1
 echo     Number of audio files to generate per text line
 echo     各テキスト行に対して生成する音声ファイル数
 echo.
+echo   @REM set HF_HOME=huggingface_cache
+echo     Uncomment by removing '@REM ' to temporarily use local cache
+echo     '@REM 'を削除してアンコメントすることでローカルキャッシュを使用
+echo     This avoids using user folder for Huggingface model cache
+echo     Huggingfaceモデルキャッシュでユーザーフォルダを使用しなくなります
+echo     WARNING: Disables model sharing between multiple processes
+echo     注意: 複数プロセス間でのモデル共有ができなくなります
+echo.
 echo Advanced customization / 高度なカスタマイズ:
 echo   To use custom text file, modify the command line in this batch file:
 echo   カスタムテキストファイルを使用するには、このバッチファイル内のコマンドラインを変更:
@@ -78,6 +86,7 @@ exit /b 0
 @REM 環境変数設定
 set PLAY=--play --volume 0.7 --speed 1.0
 set BATCH_COUNT=1
+@REM set HF_HOME=huggingface_cache
 
 echo ===============================================
 echo Llasa Pipe Server Mode / Llasa パイプサーバーモード

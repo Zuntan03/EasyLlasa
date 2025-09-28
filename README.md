@@ -31,6 +31,14 @@ Geforce RTX 3060 12GB 以上を搭載した Windows PC が必要です（1音声
 
 ## 最近の更新
 
+### 2025/09/28
+
+- `StartServer.bat` と `BatchGenerate.bat` に `@REM set HF_HOME=huggingface_cache` を追加しました。
+	- `set HF_HOME=huggingface_cache` とアンコメントすることで、Windows のユーザーフォルダのストレージ消費を回避できます。
+	- ただし、Huggingace ライブラリの思想である「複数プロセスでのモデル共有」ができなくなります。
+- pip と Huggingface の共有キャッシュを削除する `PurgeSharedCache.bat` を追加しました。
+	- 共有キャッシュを削除すると、次回の pip パッケージインストール時や Huggingface モデルの利用時に再ダウンロードが発生します。
+
 ### 2025/09/25
 
 - EasyLlasa を公開しました。

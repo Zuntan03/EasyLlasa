@@ -10,6 +10,7 @@ if "%~1" == "" (
 REM Environment settings
 set PLAY=--play --volume 0.7 --speed 1.0
 set BATCH_COUNT=0
+@REM set HF_HOME=huggingface_cache
 
 REM Run Llasa in batch generation mode
 "%~dp0EasyLlasa\Llasa.bat" ^
