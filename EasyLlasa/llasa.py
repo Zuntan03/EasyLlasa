@@ -1,4 +1,4 @@
-﻿import argparse
+import argparse
 import gc
 import logging
 import os
@@ -1004,15 +1004,41 @@ class Llasa:
 
                 prompt_wav = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)(waveform_mono)
                 prompt_wav_len = prompt_wav.shape[1]
+                prompt_text = None
 
-                # 音声を転写（faster-whisper）
-                audio_numpy = prompt_wav[0].numpy()
+                # 音声の文字起こしファイルが存在する時、プロンプトとして読み込む
+                if prompt_text is None:
+                    # 対応する文字起こしテキスト拡張子
+                    prompt_text_file_extensions = {".txt", ".prompt"}
 
-                # faster-whisperで音声を転写
-                segments, info = self.whisper_model.transcribe(audio_numpy, language="ja", beam_size=5)
-                prompt_text = "".join([segment.text for segment in segments]).strip()
+                    # 音声の文字起こしファイルが存在する？
+                    prompt_text_path = None
+                    for e in prompt_text_file_extensions:
+                        p = f"{sample_audio_path}{e}"
+                        if os.path.isfile(p):
+                            prompt_text_path = p
 
-                print(f"Transcribed text: {prompt_text} / 転写されたテキスト: {prompt_text}")
+                    # 音声の文字起こしファイルが存在するなら、読み込む
+                    if prompt_text_path is not None:
+                        prompt_text_file = None
+                        try:
+                            with open(prompt_text_path, "r", encoding="utf-8", newline=None) as f:
+                                prompt_text_file = f.read()
+                            prompt_text = "".join(prompt_text_file.splitlines()).strip()
+                            print(f"Prompt text ({prompt_text_path}): {prompt_text} / 指示されたテキスト ({prompt_text_path}): {prompt_text}")
+                        except Exception as e:
+                            print(f"Warning: Failed to open {prompt_text_path}: {e} / 警告: 文字起こしファイルのオープンに失敗しました {prompt_text_path} : {e}")
+
+                # プロンプトが未設定なら、 faster-whisperで文字起こし
+                if prompt_text is None:
+                    # 音声を転写（faster-whisper）
+                    audio_numpy = prompt_wav[0].numpy()
+
+                    # faster-whisperで音声を転写
+                    segments, info = self.whisper_model.transcribe(audio_numpy, language="ja", beam_size=5)
+                    prompt_text = "".join([segment.text for segment in segments]).strip()
+
+                    print(f"Transcribed text: {prompt_text} / 転写されたテキスト: {prompt_text}")
 
                 # 転写されたテキストを正規化
                 prompt_text = self.normalize_text(prompt_text)
