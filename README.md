@@ -31,6 +31,10 @@ Geforce RTX 3060 12GB 以上を搭載した Windows PC が必要です（1音声
 
 ## 最近の更新
 
+### 2025/09/30
+
+- SageAttention を `v2.2.0-windows.post3` に更新しました。
+
 ### 2025/09/29
 
 - `-w, --whisper`オプションで Whisper モデルを指定可能にしました。
