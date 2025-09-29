@@ -9,20 +9,13 @@ import warnings
 from datetime import datetime
 from typing import Optional, Tuple
 
-import pywintypes
-import win32file
-import win32pipe
-
-# 特定の警告をピンポイントで抑制
-warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
-
-# PyTorchの分散処理警告を抑制（ログシステム経由）
-logging.getLogger("torch.distributed.elastic.multiprocessing.redirects").setLevel(logging.ERROR)
-
 import numpy as np
+import pywintypes
 import soundfile as sf
 import torch
 import torchaudio
+import win32file
+import win32pipe
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -30,6 +23,17 @@ from transformers import (
     pipeline,
 )
 from xcodec2.modeling_xcodec2 import XCodec2Model
+
+# 特定の警告をピンポイントで抑制
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
+# Whisperの入力パラメータ名変更に関する警告を抑制
+warnings.filterwarnings("ignore", message="The input name `inputs` is deprecated", category=FutureWarning)
+
+# PyTorchの分散処理警告を抑制（ログシステム経由）
+logging.getLogger("torch.distributed.elastic.multiprocessing.redirects").setLevel(logging.ERROR)
+
+# transformersの警告を抑制
+logging.getLogger("transformers").setLevel(logging.ERROR)
 
 
 class Llasa:

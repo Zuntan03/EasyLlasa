@@ -9,10 +9,7 @@ if "%~1"=="" (
 
 REM Use Request.bat to send the request with all arguments
 call "%~dp0EasyLlasa\Request.bat" %*
-
-if %ERRORLEVEL% NEQ 0 (
-    exit /b %ERRORLEVEL%
-)
+if %ERRORLEVEL% NEQ 0 ( pause & exit /b 1 )
 
 echo.
 echo Generate.bat completed successfully
