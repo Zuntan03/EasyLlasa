@@ -18,23 +18,24 @@ setlocal enabledelayedexpansion
 
 echo Checking paths... / パス確認中...
 
-set "VALID_PATHS="
 set "VALID_COUNT=0"
+set "PATHS_FILE=%~dp0Request-Paths.txt"
+echo. > "%PATHS_FILE%"
 
-rem 全ての引数をチェックして有効なパスのみを収集
-for %%A in (%*) do (
-    if exist "%%~A" (
-        set /a VALID_COUNT+=1
-        if defined VALID_PATHS (
-            set "VALID_PATHS=!VALID_PATHS! %%A"
-        ) else (
-            set "VALID_PATHS=%%A"
-        )
-        echo Valid: %%~A
-    ) else (
-        echo Warning: Path not found - %%~A
-    )
+rem Check all arguments and collect valid paths
+:loop
+if "%~1"=="" goto :check_valid
+if exist "%~1" (
+    set /a VALID_COUNT+=1
+    echo Valid: "%~1"
+    echo "%~1" >> "%PATHS_FILE%"
+) else (
+    echo Warning: Path not found - "%~1"
 )
+shift
+goto :loop
+
+:check_valid
 
 if %VALID_COUNT% EQU 0 (
     echo Error: No valid paths found
@@ -50,17 +51,11 @@ echo.
 
 echo Sending request to Llasa server via named pipe...
 
-rem パスファイルにパスを書き出し
-set "PATHS_FILE=%~dp0Request-Paths.txt"
-echo. > "%PATHS_FILE%"
-for %%A in (%*) do (
-    if exist "%%~A" (
-        echo %%~A >> "%PATHS_FILE%"
-    )
-)
-
 rem PowerShellスクリプトファイルを呼び出し（パスファイルを渡す）
-powershell -ExecutionPolicy Bypass -File "%~dp0Request.ps1" -pathsFile "%PATHS_FILE%"
+rem PowerShell script is in the same directory as this batch file
+set "PS_SCRIPT=.\Request.ps1"
+
+powershell -ExecutionPolicy Bypass -File "%PS_SCRIPT%" -pathsFile "%PATHS_FILE%"
 set "PS_EXIT_CODE=%ERRORLEVEL%"
 
 rem パスファイルを削除

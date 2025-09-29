@@ -8,8 +8,11 @@ if "%~1"=="" (
 )
 
 REM Use Request.bat to send the request with all arguments
-call "%~dp0EasyLlasa\Request.bat" %*
-if %ERRORLEVEL% NEQ 0 ( pause & exit /b 1 )
+pushd "%~dp0EasyLlasa"
+call "Request.bat" %*
+set "EXIT_CODE=%ERRORLEVEL%"
+popd
+if %EXIT_CODE% NEQ 0 ( pause & exit /b %EXIT_CODE% )
 
 echo.
 echo Generate.bat completed successfully

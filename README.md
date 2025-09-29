@@ -35,6 +35,7 @@ Geforce RTX 3060 12GB 以上を搭載した Windows PC が必要です（1音声
 
 - `-w, --whisper`オプションで Whisper モデルを指定可能にしました。
 	- デフォルトは `litagin/anime-whisper` で、`openai/whisper-large-v3-turbo` なども指定できます。
+- 音声ファイル名に `()` が含まれていると正しく動作しなかった不具合を修正しました。
 
 ### 2025/09/28
 

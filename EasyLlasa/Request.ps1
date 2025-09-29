@@ -73,6 +73,15 @@ try {
 	# パスファイルからパスを読み取り
 	$pathArray = Get-Content $pathsFile -Encoding UTF8 | Where-Object { $_.Trim() -ne "" }
 	
+	# 引用符を除去してパスを正規化
+	$pathArray = $pathArray | ForEach-Object { 
+		$path = $_.Trim()
+		if ($path.StartsWith('"') -and $path.EndsWith('"')) {
+			$path = $path.Substring(1, $path.Length - 2)
+		}
+		$path
+	}
+	
 	$dataToSend = ($pathArray -join "`n") + "`n"
 	Write-Host "PowerShell: Sending $($pathArray.Count) paths (line by line):"
 	$pathArray | ForEach-Object { Write-Host "  '$_'" }
