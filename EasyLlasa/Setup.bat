@@ -29,8 +29,8 @@ echo python -m pip install -qq -U pip "setuptools<81" wheel
 python -m pip install -qq -U pip "setuptools<81" wheel
 if %ERRORLEVEL% neq 0 ( pause & popd & exit /b 1 )
 
-echo pip install -qq transformers==4.45.2 soundfile==0.13.1 bitsandbytes==0.47.0 accelerate==1.10.1 torchao==0.13.0 faster-whisper==1.2.0 pywin32==311
-pip install -qq transformers==4.45.2 soundfile==0.13.1 bitsandbytes==0.47.0 accelerate==1.10.1 torchao==0.13.0 faster-whisper==1.2.0 pywin32==311
+echo pip install -qq transformers==4.45.2 soundfile==0.13.1 bitsandbytes==0.47.0 accelerate==1.10.1 torchao==0.13.0 pywin32==311
+pip install -qq transformers==4.45.2 soundfile==0.13.1 bitsandbytes==0.47.0 accelerate==1.10.1 torchao==0.13.0 pywin32==311
 if %ERRORLEVEL% neq 0 ( pause & popd & exit /b 1 )
 
 echo pip install -qq xcodec2==0.1.5

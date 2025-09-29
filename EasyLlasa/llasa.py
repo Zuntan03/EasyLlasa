@@ -23,8 +23,12 @@ import numpy as np
 import soundfile as sf
 import torch
 import torchaudio
-from faster_whisper import WhisperModel
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    pipeline,
+)
 from xcodec2.modeling_xcodec2 import XCodec2Model
 
 
@@ -33,7 +37,7 @@ class Llasa:
     Llasa voice generation tool / Llasa音声生成ツール
 
     Performance optimizations / パフォーマンス最適化:
-    - Use faster-whisper for speech recognition (automatic) / 音声認識にfaster-whisperを使用（自動）
+    - Selectable Whisper models (anime-whisper/whisper-large-v3-turbo) / Whisperモデル選択可能（anime-whisper/whisper-large-v3-turbo）
     - SageAttention is automatically detected and enabled if available / SageAttentionは利用可能な場合自動検出・有効化
     - Use --quantization to enable 4-bit quantization for VRAM efficiency / --quantizationで4bit量子化を有効化しVRAM効率化
     """
@@ -54,6 +58,8 @@ class Llasa:
         self.tokenizer = None
         self.codec_model = None
         self.whisper_model = None
+        self.whisper_model_name = "litagin/anime-whisper"  # デフォルト
+        self.whisper_generate_kwargs = None
 
         # 時間計測用の属性
         self.generation_start_time = None
@@ -124,6 +130,15 @@ class Llasa:
             type=str,
             default="NandemoGHS/Anime-Llasa-3B",
             help="Model name to use (e.g., NandemoGHS/Anime-Llasa-3B) / 使用するモデル名 (例: NandemoGHS/Anime-Llasa-3B)",
+        )
+
+        # Whisperモデル選択オプション
+        parser.add_argument(
+            "-w",
+            "--whisper",
+            type=str,
+            default="litagin/anime-whisper",
+            help="Whisper model ID to use for speech recognition (e.g., litagin/anime-whisper, openai/whisper-large-v3-turbo) (default: litagin/anime-whisper) / 音声認識に使用するWhisperモデルID（例: litagin/anime-whisper, openai/whisper-large-v3-turbo）（デフォルト: litagin/anime-whisper）",
         )
 
         # パスのリスト（処理対象ファイル）
@@ -271,6 +286,8 @@ class Llasa:
         self.repetition_penalty = args.repetition_penalty
         # テスト用シード設定
         self.seed = args.test_seed
+        # Whisperモデル設定
+        self.whisper_model_name = args.whisper
         self.paths = args.paths
 
         # サーバーモードの場合は音声ファイル検索をスキップ（リクエスト時に処理）
@@ -930,17 +947,54 @@ class Llasa:
 
             print("XCodec2 model loaded successfully / XCodec2モデル読み込み完了")
 
-            # Whisperモデルの読み込み（faster-whisper）
+            # Whisperモデルの読み込み（transformers pipelineを使用、CUDA前提）
             print(
-                "Loading faster-whisper model for speech recognition... / 音声認識用faster-whisperモデルを読み込み中..."
+                f"Loading Whisper model ({self.whisper_model_name}) for speech recognition... / 音声認識用Whisperモデル ({self.whisper_model_name}) を読み込み中..."
             )
-            # GPUが利用可能かチェック
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            compute_type = "float16" if device == "cuda" else "int8"
 
-            # faster-whisperモデルを読み込み（large-v3を使用）
-            self.whisper_model = WhisperModel("large-v3", device=device, compute_type=compute_type)
-            print("faster-whisper model loaded successfully / faster-whisperモデル読み込み完了")
+            # モデルIDに基づいて適切なパラメータを設定
+            if self.whisper_model_name == "litagin/anime-whisper":
+                # anime-whisperの場合（HuggingFaceページの仕様に完全準拠）
+                self.whisper_model = pipeline(
+                    "automatic-speech-recognition",
+                    model=self.whisper_model_name,
+                    device="cuda",
+                    torch_dtype=torch.float16,
+                    chunk_length_s=30.0,
+                    batch_size=64,
+                )
+                # anime-whisper用の生成パラメータ（初期プロンプト使用禁止）
+                self.whisper_generate_kwargs = {
+                    "language": "Japanese",
+                    "no_repeat_ngram_size": 0,
+                    "repetition_penalty": 1.0,
+                }
+            elif self.whisper_model_name == "openai/whisper-large-v3-turbo":
+                # whisper-large-v3-turboの場合（Anime-Llasa-3B-Demoの仕様に完全準拠）
+                self.whisper_model = pipeline(
+                    "automatic-speech-recognition",
+                    model=self.whisper_model_name,
+                    torch_dtype=torch.float16,
+                    device="cuda",
+                )
+                self.whisper_generate_kwargs = None  # generate_kwargsは使用しない（Demo.pyと一致）
+            else:
+                # その他のWhisperモデルの場合（一般的なwhisperモデル用パラメータ）
+                self.whisper_model = pipeline(
+                    "automatic-speech-recognition",
+                    model=self.whisper_model_name,
+                    device="cuda",
+                    torch_dtype=torch.float16,
+                    chunk_length_s=30.0,
+                    batch_size=16,  # 一般的なモデルでは控えめなバッチサイズ
+                )
+                # 一般的なwhisperモデル用の生成パラメータ
+                self.whisper_generate_kwargs = {
+                    "language": "ja",  # 一般的なwhisperモデルでは"ja"を使用
+                    "task": "transcribe",
+                }
+
+            print(f"{self.whisper_model_name} model loaded successfully / {self.whisper_model_name}モデル読み込み完了")
 
             print("All models loaded successfully! / 全モデル読み込み完了！")
 
@@ -1005,12 +1059,16 @@ class Llasa:
                 prompt_wav = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)(waveform_mono)
                 prompt_wav_len = prompt_wav.shape[1]
 
-                # 音声を転写（faster-whisper）
+                # 音声を転写（transformers pipelineを使用）
                 audio_numpy = prompt_wav[0].numpy()
 
-                # faster-whisperで音声を転写
-                segments, info = self.whisper_model.transcribe(audio_numpy, language="ja", beam_size=5)
-                prompt_text = "".join([segment.text for segment in segments]).strip()
+                if self.whisper_generate_kwargs:
+                    # generate_kwargsがある場合（anime-whisper等）
+                    result = self.whisper_model(audio_numpy, generate_kwargs=self.whisper_generate_kwargs)
+                else:
+                    # generate_kwargsがない場合（whisper-large-v3-turbo等、Anime-Llasa-3B-Demoと一致）
+                    result = self.whisper_model(audio_numpy)
+                prompt_text = result["text"].strip()
 
                 print(f"Transcribed text: {prompt_text} / 転写されたテキスト: {prompt_text}")
 

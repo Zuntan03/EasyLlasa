@@ -31,6 +31,11 @@ Geforce RTX 3060 12GB 以上を搭載した Windows PC が必要です（1音声
 
 ## 最近の更新
 
+### 2025/09/29
+
+- `-w, --whisper`オプションで Whisper モデルを指定可能にしました。
+	- デフォルトは `litagin/anime-whisper` で、`openai/whisper-large-v3-turbo` なども指定できます。
+
 ### 2025/09/28
 
 - `StartServer.bat` と `BatchGenerate.bat` に `@REM set HF_HOME=huggingface_cache` を追加しました。
@@ -60,6 +65,7 @@ set BATCH_COUNT=0
 
 #### 基本設定 (Core Settings)
 - `-m, --model`: 使用するモデル名（デフォルト: `NandemoGHS/Anime-Llasa-3B`）
+- `-w, --whisper`: Whisperモデル選択（例: `litagin/anime-whisper`, `openai/whisper-large-v3-turbo`）
 - `-t, --text`: テキストファイルパス（デフォルト: `Dialogue.txt`）
 - `-o, --output`: 出力ディレクトリ（デフォルト: `Output`）
 
